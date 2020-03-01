@@ -14,8 +14,8 @@ httpdInstall() {
 }
 
 sqlInstall(){
-	tar -zxvf myGuitarShopPhp.tar.gz
-	ll scripts/
+	tar -zxvf MyGuitarShopPhp.tar.gz
+	ls -l scripts/
 	sudo -i
 	yum install mysql -y
 
@@ -27,7 +27,7 @@ sqlInstall(){
 
 Finishing(){
 	
-	ll /var
+	ls -l /var
 	sudo chown root:www /var/www
 	sudo chmod 2775 /var/www
 	sudo cp database_error.php database.php index.php main.css /var/www/html
@@ -42,17 +42,17 @@ while [ 1 ]
 do
 CHOICE=$(whiptail --title "Setup Selection(4)" --menu "Choose what you would like to do::" 13 80 4 \
 	"1" "httpdInstall" \
-	"2" "DucklingtonConfiuration" \
-	"3" "BucknellConfiguration" \
+	"2" "sqlInstall" \
+	"3" "Finishing" \
 	"0" "Exit" 3>&1 1>&2 2>&3)
 	case $CHOICE in
 
 	1)
 		httpdInstall;;
 	2)
-		DucklingtonConfig;;
+		sqlInstall;;
 	3)
-		BucknellConfig;;	
+		Finishing;;	
 	0)
 		break;;
 	*)
