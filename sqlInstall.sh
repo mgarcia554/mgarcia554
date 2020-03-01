@@ -2,8 +2,6 @@
 
 httpdInstall() {
 	yum install httpd24 php72 php72-mysqlnd -y
-	yum list installed | grep -i php
-	yum list installed | grep -i httpd
 	service httpd start
 	chkconfig httpd on
 	chkconfig | grep httpd on
@@ -68,3 +66,4 @@ clear
 
 echo "when exited it'll auto run groups then re-run the script and run finish"
 groups
+
