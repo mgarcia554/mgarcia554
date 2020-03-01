@@ -30,11 +30,12 @@ Finishing(){
 	ls -l /var
 	sudo chown root:www /var/www
 	sudo chmod 2775 /var/www
+	cd scripts/
 	sudo cp database_error.php database.php index.php main.css /var/www/html
 	find /var/www -type d -exec sudo chmod 2775 {} +
 	find /var/www -type d -exec sudo chmod 0664 {} +
-	cd scripts/
-	ll /var/www/html
+	
+	ls -l /var/www/html
 
 }
 
@@ -67,4 +68,3 @@ clear
 
 echo "when exited it'll auto run groups then re-run the script and run finish"
 groups
-
