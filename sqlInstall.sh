@@ -31,9 +31,13 @@ Finishing(){
 	cd scripts/
 	sudo cp database_error.php database.php index.php main.css /var/www/html
 	find /var/www -type d -exec sudo chmod 2775 {} +
-	find /var/www -type d -exec sudo chmod 0664 {} +
-	
+	find /var/www -type f -exec sudo chmod 0664 {} +
 	ls -l /var/www/html
+
+	echo "nano /var/html/database.php"
+	echo "change mysql:host=(endpoint of rds)"
+	echo "change $username ='mgs_user' from mgs_user to root";
+	echo "change the $password ='pa55word' to ?Defen16";
 
 }
 
@@ -66,4 +70,3 @@ clear
 
 echo "when exited it'll auto run groups then re-run the script and run finish"
 groups
-
