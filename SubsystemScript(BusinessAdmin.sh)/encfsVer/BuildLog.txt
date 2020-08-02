@@ -1,0 +1,143 @@
+July 10, 2020 --- Build 1: Worked on the menus for the program 
+
+July 11, 2020 --- Build 2: Got started on the main functions for the Employee dashboard
+Finished most of the main functions
+
+July 12, 2020 --- Build 3:
+Discovered many bugs and decided to tweak the code. Ended up tweaking a setup for automation purposes.
+
+July 13, 2020 --- Build 4(tweaking build): Discovered fatal flaw in login code that allowed anyone to log in, fixed the fatal flaw by using set and default variables.
+Update: set caused a memory leak by taking in something that wasn't in memory and then dumping the source code(in heinsight it dumped what it found in this case it was programmed to look in the database file when it didn't find what it was looking for it read the whole file and then the source code to see if it was there and then dumped what it found on the terminal). easily fixed with 1>/dev/null:::attempted better security by running everything
+as root user. Was not able to implement today. The reason I want to implement this because then
+only the root user and sudo users would be able to access the files since the account is logged into an admin by default(sudo user). 
+
+July 14, 2020 --- Build 5: Fixed the create users bug and implemented actual-fake user accounts into the crtUsrs script. Testing results: everything works accordinly - Users are now able to log into their personalized emails with mutt, users are now able to make a new localc file and open it as long as they know the directory and file name inside of /etc/users. Group ID Authentication has been implemented for added security when logging it. Sudo security feature has been configured and works properly. It will only work if you run the script with: sudo ./BusinessAdmin.sh
+
+
+This has been implemented so that way only sudoers and root has access to the fake subsystem(sub filesystem) created inside of /etc/(the subsystem(subsystem as in sub file system) is /etc/users/)
+
+
+Sending email with mutt has been implemented and is in the process of being tested. I was only able to make 2 email accounts as i had used up my number on google lol(sending mail with mutt did not work and will be removed in the future build, logging into the accounts worked though, will implement a thunderbird client in future build)
+
+July 16, 2020 -- Build6: Created the administration dashboard with various functions. 
+Updated the GID authentication on Admin to accept only 0 as well as added a manage function which currently only has 2 working things:
+make new user
+delete user
+
+FATAL BUG FOUND AND PATCHED 5:56PM 7-16-2020: GID GETS REPLACED BY # IN SED FIXED WITH IF STATEMENT AND REMOVING UN NECESSARY SED COMMANDS
+
+July 17, 2020 -- Build7(tweaking build): Perfected the new user and delete user functions
+it's not perfect but it's functioning. 
+
+Problem:(this isn’t really a bug more of a nuisance) It will mass delete passwords if there is a similar password used throughout the password section in the database
+For example: 
+Dad1:mad
+Dad2:mad2
+Dad3:mad3
+
+When dad1 is deleted it will delete all the passwords and the end result will be like this
+dad1:#
+dad2:#2
+dad3:#3
+
+When outputting the IFS value it will display:
+Dad1 mad 3(or 0) /etc/users/dad1
+
+
+It will display the properly line and the associated default variables
+But will delete all passwords
+
+
+As you can see the other accounts exist with no password
+Deleting another field is an alternative 
+But it’s an alternative that doesn’t work as deleting the GID will mass delete all GID
+And it’s the same with the usernames. The problem solely lies in the code and how it works with deleting. Like i said this is a bug/nuisance but it’s isn’t enough to make a big deal over we’d just have to make a readme saying to make unique usernames and provide examples of what not to do.
+
+
+
+July 18, 2020 -- Build8(Isaac):Integrated some code after the mutt installation in the ‘Setup function’. Implements a loading gauge while mutt packages install. Below is the code.
+
+sudo apt-get install mutt -y >1 muttLoadout.txt
+
+# Loading gauge while 'mutt' installs its packages. Sent output to file muttLoadout.txt'
+{
+	for ((i = 0 ; i <= 100 ; i+=13)); do
+    	sleep 1
+    	echo $i
+	done
+} | whiptail --gauge "Please wait while we install the necessary packages install..." 6 50 0
+
+
+July 19, 2020 --  Build 9(ANY GOOD BUG IS A DEAD BUG EDITION): 
+
+Fixed the append issue where it was making the new users on the same line by using \n.
+Fatal bug found with: cd "$4";sudo rm *;cd ..;sudo rmdir "$1"
+line of code. The issue: ; executes a command/executable no matter if the previous command
+		executed successfully or not this has been fixed by replacing them with amphersands(&&)
+
+The user deletion issue:
+When deleting the default variable of the user it tends to read all the default IFS values for
+all the users in the file. This can be seen when you delete the GID 3 - doing this with sed finds and replaces all occurances of the GID 3. This can also be seen when having similar passwords or 
+user names across multiple accounts
+Example:
+dog1:cat:3
+dog2:cat2:3
+dog3:cat3:3
+if set up to delete the password and GID for one of the accounts
+all passwords and GID that are similar will be replace with # with the output result being
+dog1:#:#
+dog2:#2:#
+dog3:#3:#
+
+deleting the cat password would delete cat2 and cat 3 passwords as sed is looking for the word cat
+and replacing it with #
+leaving cat2 and 3 to have #2, #3.
+This issue can be fixed by disabling/deleting the account by creating and deleting a UUID(universally unique identifier) using
+the uuidgen command. Only the base command is necessary as this command by default randomly generates a Unique User Identification(Universally Unique Identifier) value. The only thing that would need to be updated in the
+code after this is the check to see if there is infact no UUID(Universally Unique Identifier) for a user.
+
+In order for UUID(Universally Unique Identifier) to generate a unique user ID(Universally Unique Identifier) for every new user you must put the command inside of the if statement so that way it generates a new UUID(Universally Unique Identifier) for each user everytime the if statement is ran or else it's going to generate one UUID(Universally Unique Identifier) and that will be subsystem-wide for all accounts during that sessions creation process.
+
+The definition of the acronym is dependent on it’s context it can be Universally Unique Identifier or Unique User ID or Universal User Idenftification.
+
+July 22, 2020 --  Build 10:
+
+Added -w to the 3 grep statements so that way it looks for the exact specified word inputted by the user
+added the ability to create new libre office documents in all of the LO applications that come out-of-box with Ubuntu.
+I've also added the ability to open these files.
+
+
+July 23, 2020 -- Build 11:
+
+Added a restriction that only allows you to run the script/program on Ubuntu 18.04.4
+and tested the libre office functions (they're fine)
+
+July 26, 2020 -- Build 12(FINAL BUILD):
+added the ability for the administrator to make directories
+Put everything inside of /etc/users(made it a complete subsystem)
+automated setup with a tar.gz file
+changed all paths in the script to work with the subsystem
+made a read me
+
+August 1, 2020 - Extra Build 13:
+Fixed the deleting users bug by completely re working the authentication process.
+Every user now has a hashed password allowing them to have the same password but not the same username
+the passwords are hashed with the SHA512 hash algorithm.
+
+during the authentication process the password field is extracted and put into a file called auth1.txt
+when the user inputs their password at login it's rehashed and placed into a file called auth2.txt
+these two files are compared to each other with diff to see if they're the same hash. If they are 
+it lets them log in.
+This fix allows users to have the same exact password
+but still requires them to have unique usernames
+
+
+August 1, 2020 -- Extra Build 14:
+Encrypted the subsystem
+
+made a setup script to install encfs
+made it run at the setup function inside of the BusinessAdmin.sh script(it unmounts at the end of setup and deletes the setup.sh script)
+Made a quit function that unmounts it and exits the script(WARNING: It will only unmount if no other processes are using it. If it fails to unmount re-run the script and exit again)
+put the command to mount it at the login function so that way it mounts whenever users login
+updated the readme
+
