@@ -1,4 +1,0 @@
-how to enable IMAPS on gmail business:
-click square top right of google > email icon > gear on top right > see all settings > forwaring pop/IMAP > IMAP access > enable
-
-click name or google icon on the top right > manage your google account > security > less secure apps > on
