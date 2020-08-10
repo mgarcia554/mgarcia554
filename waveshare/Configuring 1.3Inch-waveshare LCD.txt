@@ -1,0 +1,179 @@
+The 1.3inch LCD HAT by wave share is a IPS LCD display for the pi, it's 240x240 pixels with an embedded
+controller that communicates of the Serial Pheriphreial Interface. It's about the size of a raspberry pi zero -
+which is ironically what we will be using in this project
+
+What is IPS LCD?
+		IPS stands for in-plane switching, a type of LED (a form of LCD) display panel technology. 
+	IPS panels are characterized as having the best color and viewing 
+	angles among the other main types of display panels, TN (twisted nematic) and VA (vertical alignment).
+
+What is the SPI for the pi zero?
+	to check this we can run lsmod in the terminal
+
+	as you can see by the output we are using the BCM2835 SPI library on the pi zero
+
+Here are some basic specs of the Thin-Film-Transistor screen:
+
+Driver: ST7789VM
+Interface: SPI
+DISPLAY: RGB, 65k color
+Resolution: 240x240
+Backlight: LED
+Operating voltage 3.3v
+Display size 23.4(H)x23.4(V)mm
+Outline size: 65x30.2mm
+
+Here is a link to an image of the GPIO pinout for the pi zero w:
+https://i.stack.imgur.com/yHddo.png
+
+Here are the interface pinouts for the TFT::
+PIN			PI PIN		Description
+3v3			3v3		3v3 Power
+GND			GND		Ground
+CLK			P11/P_SCLK	SPI clock input
+DIN			P10/P_MOSI	SPI data input
+CS			P8/P_CE0	Chip select, low active
+DC			P26		Data/Command Select
+RST			P27		Reset
+BL			P24		Black light
+KEY1			P21		Button 1GPIO
+KEY2			P20		Button 2GPIO
+KEY3			P16 		Button 3GPIO
+Joystick up		P6		Joystick up
+Joystick Down		P19		Joystick down
+Joystick left		P5		Joystick left
+Joystick Right		P26		Joystick right
+Joystick Press		P13		Joystick Press
+
+Hardware Descriptions::
+
+This LCD embedded ST7789VM, which is a controller for 24xRGBx320 resolution
+LCD. The resolution of this LCD is only 240(H)RGBx240(V) and supports initialize
+vertical display and horizontal display, thus the internal RAM of LCD is not full used.
+Refer to the datasheet, ST7789VM controller supports 12bits (RGB444), 16bits
+(RGB565) and 18bit (RGB666) color formats. This LCD uses common RGB565 format.
+Most of LCD controller can be configured to 8080, 3-wire SPI, 4-wires SPI interface
+and so on. This LCD uses 4-wire SPI interface to save GPIO and faster communicating.
+
+
+Communication Protocol::
+
+It is not like the tradition SPI protocol, it only uses MOSI to send data from
+master to slave for LCD display. For details please refer to Datasheet Page 105.
+RESX: Reset, should be pull-down when power on, set to 1 other time.
+CSX: Slave chip select. The chip is enabled only CS is set Low
+D/CX: Data/Command selection; DC=0, write command; DC=1, write data
+SDA: Data transmitted. (RGB data)
+SCL: SPI clock
+The SPI communication protocol of the data transmission uses control bits: clock
+phase (CPHA) and clock polarity (CPOL):
+CPOL defines the level while synchronization clock is idle. If CPOL=0, then it is
+LOW.
+CPHA defines at whish clock’s tick the data transmission starts. CPHL=0 – at the
+first one, otherwise at the second one
+This combination of two bits provides 4 modes of SPI data transmission. The
+commonly used is SPI0 mode, i.e. GPHL=0 and CPOL=0.
+According to the figure above, data transmitting begins at the first falling edge,
+8bit data are transmitted at one clock cycle. It is SPI0, Bitwise output, first high bits
+and low bits following.
+
+
+TUTORIAL START::
+
+
+	FBTFT PORTING(Frame Buffer Thin Film Transistor Porting)::
+
+		Framebuffer is a portion of RAM containing a bitmap that drives video displays.
+			It is a memory buffer containing a complete frame of data.It uses a memory buffer to 
+			save data for the display, if you want to change the display you just need to change
+			the data which is saved upon the buffer.
+
+		The first thing we need to do is enable some kernel modules::
+			What is a kernel module?
+				Kernel modules are pieces of code that can be loaded and unloaded into 
+				the kernel upon demand. 
+				They extend the functionality of the kernel without the need to reboot 
+				the system.(https://wiki.archlinux.org/index.php/Kernel_module)
+			
+				Kernel modules are similar to a driver in a sense but not entirely
+				Device drivers are usually also kernel modules.(https://unix.stackexchange.com/questions/47208/what-is-the-difference-between-kernel-drivers-and-kernel-modules#:~:text=A%20kernel%20module%20may%20not%20be%20a%20device%20driver%20at%20all.&text=There%20are%2C%20however%2C%20kernel%20modules,expose%20kernel%20debugging%20%2F%20performance%20information.)
+
+
+		Enabling the drivers for the TFT::
+
+		sudo nano /etc/modules > add in these lines > spi-bcm2835 > flexfb > fbtft_device >
+
+		We then need to proceed to create a new configuration profile for fbtft >
+		
+		sudo nano /etc/modprobe.d/fbtft.conf > add in the following(this is going to set the driver name
+		which gpios to use, the speed of the frame in which can be converted to MHz, the FPS to run the height, width and initialzation)
+
+options fbtft_device name=flexfb gpios=reset:27,dc:25,cs:8,led:24 speed=40000000 bgr=1 fps=60 custom=1 height=240 width=240
+options flexfb setaddrwin=0 width=240 height=240 init=-1,0x11,-2,120,-1,0x36,0x70,-1,0x3A,0x05,-1,0xB2,0x0C,0x0C,0x00,0x33,0x33,-1,0xB7,0x35,-1,0xBB,0x1A,-1,0xC0,0x2C,-1,0xC2,0x01,-1,0xC3,0x0B,-1,0xC4,0x20,-1,0xC6,0x0F,-1,0xD0,0xA4,0xA1,-1,0x21,-1,0xE0,0x00,0x19,0x1E,0x0A,0x09,0x15,0x3D,0x44,0x51,0x12,0x03,0x00,0x3F,0x3F,-1,0xE1,0x00,0x18,0x1E,0x0A,0x09,0x25,0x3F,0x43,0x52,0x33,0x03,0x00,0x3F,0x3F,-1,0x29,-3
+
+
+There are two statements begin with “options”
+gpios=reset:27,dc:25,cs:8,led:24 This statement configure pins of LCD
+height=240 width=240 This one set the resolution of LCD
+
+now reset your pi:
+
+reboot
+		
+
+
+
+		what is flexfb?
+				In an extreme short(short explanation)
+				flexfb is:: Generic FB driver for TFT LCD displays
+					It's source code can be found here:: https://elixir.bootlin.com/linux/v4.5/source/drivers/staging/fbtft/flexfb.c
+
+		After your pi has been rebooted you should see fb1 in /dev to check do: ls -l /dev | grep fb1
+
+		if it does not work you can enable SPI through raspi-config by using sudo raspi-config
+
+		flexfb spi0.0: missing stop marker at end of init sequence:::
+					https://github.com/notro/fbtft/issues/454
+				This error means that you have more than 512 values in a line but it could also mean that there is a miss configuration in your file
+
+DISPLAYING DESKTOP::
+
+	To display the desktop we need to copy the data of fb0 to fb1 while keeping fb0 and 1 the same.
+
+	first lets install some tools > sudo apt-get install cmake git > what is cmake?(https://docs.oracle.com/cd/E86824_01/html/E54763/cmake-1.html) >  The  "cmake" executable is the CMake command-line interface.  It may be used to configure projects in scripts.  Project configuration  settings may be specified on the command line with the -D option.  The -i option will cause cmake to interactively prompt for such settings.(https://cmake.org/cmake/help/v3.14/manual/cmake.1.html) > after this we need to use git to clone the frame buffer copy(https://github.com/tasanakorn/rpi-fbcp) > This program used for copy primary framebuffer to secondary framebuffer (eg. FBTFT). It require lastest raspberry pi firmware (> 2013-07-11) to working properly. >
+	 git clone https://github.com/tasanakorn/rpi-fbcp > after this we need to go into the rpi-fbcp directory and make a build directory to generate the buildsystem files for cmake to allow us to use make directly specifying that cmake should use the currnet working directory with .. which will be both the build tree and teh source tree for cmake which will then allow us to use make directly >
+	What is make? > https://edoras.sdsu.edu/doc/make.html > in this case the first file in our descriptor file would be CMakeCache.txt which will be used to make an executable in this case the executable will be fbcp(you can see the process when you run make which links the files in this order cmakefiles/fbcp.dir/main.c.o) which will then be proceeded with sudo install fbcp /usr/local/bin/fbcp:
+
+	sudo apt-get install install cmake git
+	cd ~
+	git clone https://github.com/tasanakorn/rpi-fbcp
+	cd rpi-fbcp/
+	mkdir build
+	cd build/
+	cmake ..
+	make
+	sudo install fbcp /usr/local/bin/fbcp
+
+	running the last comand will 'install' fbcp to the specified directory(https://linux.die.net/man/1/install)
+	
+	we will now set the code to auto run when booting by editing rc.local
+	sudo nano /etc/rc.local > add fbcp& the line before exit0 the amphersand is necessary for code to run in the background. 
+	WARNING: IF THIS IS MISSED YOUR OS WILL NO LONGER BOOT
+	save and exit from the file after this and we will proceed to go on and edit the display size.
+	
+	DISPLAY SIZE::
+
+	sudo nano /boot/config.txt > add the following lines to the file > hdmi_force_hotplug=1 > hdmi_cvt=300 300 60 1 0 0 0 > hdmi_group=2 > hdmi_mode=1 > hdmi_mode=87 > display_rotate = 1
+
+	sudo nano /boot/config.txt
+	hdmi_force_hotplug=1
+	hdmi_cvt=300 300 60 1 0 0 0
+	hdmi_group=2
+	hdmi_mode=1
+	hdmi_mode=87
+	display_rotate = 1
+
+	BY doing this you're setting up the resolution for the os GUI so that way it can properly display on the 1.3inch TFT screen properly.
+	the best resolution to choose is 300x300 
+
+	reboot
